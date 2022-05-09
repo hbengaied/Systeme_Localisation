@@ -1,0 +1,16 @@
+C:\Users\USER\Desktop\BE\SystemeLocalisation\SystemeLocalisation\bin\Debug\SystemeLocalisation.exe.config
+C:\Users\USER\Desktop\BE\SystemeLocalisation\SystemeLocalisation\bin\Debug\SystemeLocalisation.exe
+C:\Users\USER\Desktop\BE\SystemeLocalisation\SystemeLocalisation\bin\Debug\SystemeLocalisation.pdb
+C:\Users\USER\Desktop\BE\SystemeLocalisation\SystemeLocalisation\bin\Debug\M2Mqtt.Net.dll
+C:\Users\USER\Desktop\BE\SystemeLocalisation\SystemeLocalisation\bin\Debug\M2Mqtt.Net.pdb
+C:\Users\USER\Desktop\BE\SystemeLocalisation\SystemeLocalisation\obj\Debug\SystemeLocalisation.csproj.AssemblyReference.cache
+C:\Users\USER\Desktop\BE\SystemeLocalisation\SystemeLocalisation\obj\Debug\SystemeLocalisation.csproj.SuggestedBindingRedirects.cache
+C:\Users\USER\Desktop\BE\SystemeLocalisation\SystemeLocalisation\obj\Debug\SystemeLocalisation.Form1.resources
+C:\Users\USER\Desktop\BE\SystemeLocalisation\SystemeLocalisation\obj\Debug\SystemeLocalisation.Properties.Resources.resources
+C:\Users\USER\Desktop\BE\SystemeLocalisation\SystemeLocalisation\obj\Debug\SystemeLocalisation.csproj.GenerateResource.cache
+C:\Users\USER\Desktop\BE\SystemeLocalisation\SystemeLocalisation\obj\Debug\SystemeLocalisation.csproj.CoreCompileInputs.cache
+C:\Users\USER\Desktop\BE\SystemeLocalisation\SystemeLocalisation\obj\Debug\SystemeLocalisation.csproj.CopyComplete
+C:\Users\USER\Desktop\BE\SystemeLocalisation\SystemeLocalisation\obj\Debug\SystemeLocalisation.exe
+C:\Users\USER\Desktop\BE\SystemeLocalisation\SystemeLocalisation\obj\Debug\SystemeLocalisation.pdb
+C:\Users\USER\Desktop\BE\SystemeLocalisation\SystemeLocalisation\bin\Debug\Newtonsoft.Json.dll
+C:\Users\USER\Desktop\BE\SystemeLocalisation\SystemeLocalisation\bin\Debug\Newtonsoft.Json.xml
