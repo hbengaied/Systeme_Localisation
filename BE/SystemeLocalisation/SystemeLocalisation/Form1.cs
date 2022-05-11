@@ -260,5 +260,10 @@ namespace SystemeLocalisation
                 }
             }
         }
+
+        private void OrdreRecuperation(GpsData gpsData, Dictionary<int, BaliseData> stockage)
+        {
+            //Trouver formule math pour voir quel point est le plus proche de moi en x et y et retourner un tableau avec l'ordre par tagid
+        }
     }
 }
