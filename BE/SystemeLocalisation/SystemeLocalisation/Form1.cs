@@ -67,6 +67,12 @@ namespace SystemeLocalisation
         int secondId = 26921;
         int thirdId = 26963;
 
+        int CurrentTagId;
+        int DrawCoordX;
+        int DrawCoordY;
+
+        Graphics graphics;
+
         MqttClient mqttClient;
         public Form1()
         {
@@ -76,8 +82,9 @@ namespace SystemeLocalisation
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            //pictureBox1.Size = new Size();
-            mqttClient = new MqttClient("172.30.4.44");
+            pictureBox1.Image = new Bitmap(1250, 650);
+            graphics = Graphics.FromImage(pictureBox1.Image);
+            mqttClient = new MqttClient("test.mosquitto.org");
             mqttClient.MqttMsgPublishReceived += client_MqttMsgPublishReceived;
             string clientId = Guid.NewGuid().ToString();
             mqttClient.Connect(clientId);
@@ -126,7 +133,10 @@ namespace SystemeLocalisation
                         gpsData.y = item.data.coordinates.y;
                         gpsData.timestamp = item.timestamp;
                         gpsDataArchive = gpsData;
+                        CurrentTagId = item.tagId;
                         //affichage_struct(stockage);
+                        ConvertX(stockage,gpsData,item.tagId);
+                        ConvertY(stockage,gpsData,item.tagId);
                     }
                     else if(item.tagId == secondId ||item.tagId == thirdId)
                     {
@@ -158,6 +168,9 @@ namespace SystemeLocalisation
                             //Console.WriteLine("Valeur de la vitesse apres le calcul en x {0} et y {1} dans le stockage : ",speedx, speedy);
                             stockage[item.tagId].SpeedX = speedx;
                             stockage[item.tagId].SpeedY = speedy;
+                            CurrentTagId = item.tagId;
+                            ConvertX(stockage, gpsData, item.tagId);
+                            ConvertY(stockage, gpsData, item.tagId);
                             //Console.WriteLine("Vitesse en x {0}  Vitesse en y {1} dans l'archive pour voir si on a bien mis les valeurs", stockage[item.tagId].SpeedX, stockage[item.tagId].SpeedY);
                             PackageIsCollected(item.tagId);
                             PackageIsDropped(item.tagId);
@@ -186,6 +199,9 @@ namespace SystemeLocalisation
                             ajout_archive.isLost = false;
                             stockage.Add(item.tagId, ajout);
                             stockage_archive.Add(item.tagId, ajout_archive);
+                            CurrentTagId = item.tagId;
+                            ConvertX(stockage, gpsData, item.tagId);
+                            ConvertY(stockage, gpsData, item.tagId);
                         }
                     }
                 }
@@ -261,9 +277,50 @@ namespace SystemeLocalisation
             }
         }
 
+        private void TimerEvent(object sender, EventArgs e)
+        {
+            //faire une boucle pour draw le nb de colis dispo dans stockage
+            //pas oublier d'effacer les coord precedente avant de redessiner les new
+
+            //egalement un if si gpsData pas vide draw le gsp
+            graphics.FillRectangle(Brushes.Black, 109, 605, 30, 30);
+            graphics.FillRectangle(Brushes.Red, 1203, 180, 30, 30);
+            graphics.FillRectangle(Brushes.Yellow, 781, 379, 30, 30);
+            pictureBox1.Refresh();
+
+        }
         private void OrdreRecuperation(GpsData gpsData, Dictionary<int, BaliseData> stockage)
         {
             //Trouver formule math pour voir quel point est le plus proche de moi en x et y et retourner un tableau avec l'ordre par tagid
         }
+
+        private void ConvertX(Dictionary<int, BaliseData> stockage, GpsData gpsData, int tagId)
+        {
+            int AverageRealLifeX = ((26614_280) + (26574_181)) / 2;
+            int CoeffX = AverageRealLifeX / 1250;
+            if(tagId == mainId)
+            {
+                DrawCoordX = gpsData.x / CoeffX;
+            }else if(tagId == secondId || tagId == thirdId)
+            {
+                DrawCoordX = stockage[tagId].x / CoeffX;
+            }
+        }
+
+        private void ConvertY(Dictionary<int, BaliseData> stockage, GpsData gpsData, int tagId)
+        {
+            int AverageRealLifeY = ((26614_280) + (26574_181)) / 2;
+            int CoeffY = AverageRealLifeY / 1250;
+            if (tagId == mainId)
+            {
+                DrawCoordY = gpsData.y / CoeffY;
+            }
+            else if (tagId == secondId || tagId == thirdId)
+            {
+                DrawCoordY = stockage[tagId].y / CoeffY;
+            }
+        }
+
+
     }
 }
