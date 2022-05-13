@@ -28,6 +28,18 @@ namespace SystemeLocalisation
             public decimal SpeedY;
             public bool isGet;
             public bool isLost;
+
+            public BaliseData()
+            {
+                x = 0;
+                y = 0;
+                timestamp = 0;
+                tagId = 0;
+                SpeedX = 0;
+                SpeedY = 0;
+                isGet = false;
+                isLost = false;
+            }
         }
 
         public class GpsData
@@ -36,6 +48,14 @@ namespace SystemeLocalisation
             public int y;
             public decimal timestamp;
             public int tagId;
+
+            public GpsData()
+            {
+                x = 0;
+                y = 0;
+                timestamp = 0;
+                tagId = 0;
+            }
 
         }
 
@@ -70,6 +90,8 @@ namespace SystemeLocalisation
         int CurrentTagId;
         int DrawCoordX;
         int DrawCoordY;
+        int DrawCoordArchiveX;
+        int DrawCoordArchiveY;
 
         Graphics graphics;
 
@@ -104,11 +126,11 @@ namespace SystemeLocalisation
         //    return nouveau;
         //}
 
-        private void affichage_struct(Dictionary<int,BaliseData> d)
+        private void affichage_struct(Dictionary<int, BaliseData> d)
         {
-            foreach(KeyValuePair<int, BaliseData> kvp in d)
+            foreach (KeyValuePair<int, BaliseData> kvp in d)
             {
-                Console.WriteLine("Key {0}\nTagId : {1} \nX : {2}\nY : {3}\nTimeStamp : {4} \nSpeedX : {5} \nSpeedY : {6} ", 
+                Console.WriteLine("Key {0}\nTagId : {1} \nX : {2}\nY : {3}\nTimeStamp : {4} \nSpeedX : {5} \nSpeedY : {6} ",
                     kvp.Key, kvp.Value.tagId, kvp.Value.x, kvp.Value.y, kvp.Value.timestamp, kvp.Value.SpeedX, kvp.Value.SpeedY);
             }
         }
@@ -127,16 +149,65 @@ namespace SystemeLocalisation
                 {
                     if (item.tagId == mainId)
                     {
-                        //Console.WriteLine("Ensuite ici on a modifie juste les valeur de la balise gps");
-                        gpsData.tagId = item.tagId;
-                        gpsData.x = item.data.coordinates.x;
-                        gpsData.y = item.data.coordinates.y;
-                        gpsData.timestamp = item.timestamp;
-                        gpsDataArchive = gpsData;
-                        CurrentTagId = item.tagId;
-                        //affichage_struct(stockage);
-                        ConvertX(stockage,gpsData,item.tagId);
-                        ConvertY(stockage,gpsData,item.tagId);
+                        if(gpsData.x == 0)
+                        {
+                            //Premire fois qu'on voit cet id tu maintag
+                            Console.WriteLine(item.data.coordinates.y);
+                            gpsData.tagId = item.tagId;
+                            gpsData.x = item.data.coordinates.x;
+                            gpsData.y = item.data.coordinates.y;
+                            gpsData.timestamp = item.timestamp;
+
+                            gpsDataArchive.tagId = item.tagId;
+                            gpsDataArchive.x = item.data.coordinates.x;
+                            gpsDataArchive.y = item.data.coordinates.y;
+                            gpsDataArchive.timestamp = item.timestamp;
+
+                            CurrentTagId = item.tagId;
+                            ConvertX(stockage, gpsData, item.tagId);
+                            ConvertY(stockage, gpsData, item.tagId);
+                            //Console.WriteLine("X a dessiner {0}", DrawCoordX);
+                            //Console.WriteLine("Y a dessiner {0}", DrawCoordY);
+                            Console.WriteLine("Affichage Stockgps Premiere fois");
+                            Console.WriteLine(gpsData.tagId);
+                            Console.WriteLine(gpsData.x);
+                            Console.WriteLine(gpsData.y);
+                            Console.WriteLine("---------------------------------");
+                            EraseArchiveX(stockage_archive, gpsDataArchive, item.tagId);
+                            EraseArchiveY(stockage_archive, gpsDataArchive, item.tagId);
+
+                        }
+                        else
+                        {
+                            //Console.WriteLine("Ensuite ici on a modifie juste les valeur de la balise gps");
+                            gpsData.tagId = item.tagId;
+                            gpsData.x = item.data.coordinates.x;
+                            gpsData.y = item.data.coordinates.y;
+                            gpsData.timestamp = item.timestamp;
+                            CurrentTagId = item.tagId;
+                            //affichage_struct(stockage);
+                            ConvertX(stockage,gpsData,item.tagId);
+                            ConvertY(stockage,gpsData,item.tagId);
+                            EraseArchiveX(stockage_archive, gpsDataArchive, item.tagId);
+                            EraseArchiveY(stockage_archive, gpsDataArchive, item.tagId);
+                            //Console.WriteLine("X a dessiner {0}", DrawCoordX);
+                            //Console.WriteLine("Y a dessiner {0}", DrawCoordY);
+                            //Console.WriteLine("X a effacer {0}", DrawCoordArchiveX);
+                            //Console.WriteLine("Y a effacer {0}", DrawCoordArchiveY);
+                            Console.WriteLine("Affichage Stockgps");
+                            Console.WriteLine(gpsData.tagId);
+                            Console.WriteLine(gpsData.x);
+                            Console.WriteLine(gpsData.y);
+                            Console.WriteLine("Affichage gps archve");
+                            Console.WriteLine(gpsDataArchive.tagId);
+                            Console.WriteLine(gpsDataArchive.x);
+                            Console.WriteLine(gpsDataArchive.y);
+                            gpsDataArchive.tagId = item.tagId;
+                            gpsDataArchive.x = item.data.coordinates.x;
+                            gpsDataArchive.y = item.data.coordinates.y;
+                            gpsDataArchive.timestamp = item.timestamp;
+                        }
+
                     }
                     else if(item.tagId == secondId ||item.tagId == thirdId)
                     {
@@ -171,6 +242,8 @@ namespace SystemeLocalisation
                             CurrentTagId = item.tagId;
                             ConvertX(stockage, gpsData, item.tagId);
                             ConvertY(stockage, gpsData, item.tagId);
+                            EraseArchiveX(stockage_archive, gpsDataArchive, item.tagId);
+                            EraseArchiveY(stockage_archive, gpsDataArchive, item.tagId);
                             //Console.WriteLine("Vitesse en x {0}  Vitesse en y {1} dans l'archive pour voir si on a bien mis les valeurs", stockage[item.tagId].SpeedX, stockage[item.tagId].SpeedY);
                             PackageIsCollected(item.tagId);
                             PackageIsDropped(item.tagId);
@@ -202,6 +275,8 @@ namespace SystemeLocalisation
                             CurrentTagId = item.tagId;
                             ConvertX(stockage, gpsData, item.tagId);
                             ConvertY(stockage, gpsData, item.tagId);
+                            EraseArchiveX(stockage_archive, gpsDataArchive, item.tagId);
+                            EraseArchiveY(stockage_archive, gpsDataArchive, item.tagId);
                         }
                     }
                 }
@@ -244,9 +319,13 @@ namespace SystemeLocalisation
                 stockage_archive[tagId].y = stockage[tagId].y;
                 stockage_archive[tagId].isGet = stockage[tagId].isGet;
                 stockage_archive[tagId].isLost = stockage[tagId].isLost;
-                //Je sais pas si la ligne d'en dessous est correct :  tester et remplacer par celle de haut dessus
-                //stockage_archive = stockage;
-                gpsDataArchive = gpsData;
+            //Je sais pas si la ligne d'en dessous est correct :  tester et remplacer par celle de haut dessus
+            //stockage_archive = stockage;
+            //gpsDataArchive = gpsData;
+            gpsDataArchive.tagId = gpsData.tagId;
+            gpsDataArchive.x = gpsData.x;
+            gpsDataArchive.y = gpsData.y;
+            gpsDataArchive.timestamp = gpsData.timestamp;
         }
 
         private void PackageIsDropped(int tagId)
@@ -282,11 +361,36 @@ namespace SystemeLocalisation
             //faire une boucle pour draw le nb de colis dispo dans stockage
             //pas oublier d'effacer les coord precedente avant de redessiner les new
 
-            //egalement un if si gpsData pas vide draw le gsp
-            graphics.FillRectangle(Brushes.Black, 109, 605, 30, 30);
-            graphics.FillRectangle(Brushes.Red, 1203, 180, 30, 30);
-            graphics.FillRectangle(Brushes.Yellow, 781, 379, 30, 30);
-            pictureBox1.Refresh();
+            //egalement un if si gpsData pas vide draw le gps
+            if(CurrentTagId == mainId)
+            {
+                if(gpsData.x != 0 && gpsData.y != 0)
+                {
+                    //Console.WriteLine("On est ici");
+                    graphics.FillRectangle(Brushes.Cyan, DrawCoordArchiveX, DrawCoordArchiveY, 30, 30);
+                    graphics.FillRectangle(Brushes.Black, DrawCoordX, DrawCoordY, 30, 30);
+                    pictureBox1.Refresh();
+
+                }
+            } else if ( CurrentTagId == secondId || CurrentTagId == thirdId)
+            {
+                if (stockage.ContainsKey(CurrentTagId))
+                {
+                    if(stockage[CurrentTagId].x != 0 && stockage[CurrentTagId].y != 0)
+                    {
+                        graphics.FillRectangle(Brushes.Cyan, DrawCoordArchiveX, DrawCoordArchiveY, 30, 30);
+                        if (CurrentTagId == secondId)
+                        {
+                            graphics.FillRectangle(Brushes.Red, DrawCoordX, DrawCoordY, 30, 30);
+                            pictureBox1.Refresh();
+                        } else if(CurrentTagId == thirdId)
+                        {
+                            graphics.FillRectangle(Brushes.Yellow, DrawCoordX, DrawCoordY, 30, 30);
+                            pictureBox1.Refresh();
+                        }
+                    }
+                }
+            }
 
         }
         private void OrdreRecuperation(GpsData gpsData, Dictionary<int, BaliseData> stockage)
@@ -296,7 +400,8 @@ namespace SystemeLocalisation
 
         private void ConvertX(Dictionary<int, BaliseData> stockage, GpsData gpsData, int tagId)
         {
-            int AverageRealLifeX = ((26614_280) + (26574_181)) / 2;
+            //280 + 26614
+            int AverageRealLifeX = 26894;
             int CoeffX = AverageRealLifeX / 1250;
             if(tagId == mainId)
             {
@@ -309,8 +414,9 @@ namespace SystemeLocalisation
 
         private void ConvertY(Dictionary<int, BaliseData> stockage, GpsData gpsData, int tagId)
         {
-            int AverageRealLifeY = ((26614_280) + (26574_181)) / 2;
-            int CoeffY = AverageRealLifeY / 1250;
+            //510+7014
+            int AverageRealLifeY = 7524;
+            int CoeffY = AverageRealLifeY / 650;
             if (tagId == mainId)
             {
                 DrawCoordY = gpsData.y / CoeffY;
@@ -318,6 +424,34 @@ namespace SystemeLocalisation
             else if (tagId == secondId || tagId == thirdId)
             {
                 DrawCoordY = stockage[tagId].y / CoeffY;
+            }
+        }
+
+        private void EraseArchiveX(Dictionary<int, BaliseData> stockage, GpsData gpsDataArchive, int tagId)
+        {
+            int AverageRealLifeX = 26894;
+            int CoeffX = AverageRealLifeX / 1250;
+            if (tagId == mainId)
+            {
+                DrawCoordArchiveX = gpsDataArchive.x / CoeffX;
+            }
+            else if (tagId == secondId || tagId == thirdId)
+            {
+                DrawCoordArchiveX = stockage_archive[tagId].x / CoeffX;
+            }
+        }
+
+        private void EraseArchiveY(Dictionary<int, BaliseData> stockage_archive, GpsData gpsDataArchive, int tagId)
+        {
+            int AverageRealLifeY = 7524;
+            int CoeffY = AverageRealLifeY / 650;
+            if (tagId == mainId)
+            {
+                DrawCoordArchiveY = gpsDataArchive.y / CoeffY;
+            }
+            else if (tagId == secondId || tagId == thirdId)
+            {
+                DrawCoordArchiveY = stockage_archive[tagId].y / CoeffY;
             }
         }
 
