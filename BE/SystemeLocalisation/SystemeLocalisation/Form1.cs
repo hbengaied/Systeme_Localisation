@@ -313,12 +313,13 @@ namespace SystemeLocalisation
                 }
                 //stockage_archive[tagId] = stockage[tagId];
             }
-                stockage_archive[tagId].tagId = stockage[tagId].tagId;
-                stockage_archive[tagId].timestamp = stockage[tagId].timestamp;
-                stockage_archive[tagId].x = stockage[tagId].x;
-                stockage_archive[tagId].y = stockage[tagId].y;
-                stockage_archive[tagId].isGet = stockage[tagId].isGet;
-                stockage_archive[tagId].isLost = stockage[tagId].isLost;
+
+            stockage_archive[tagId].tagId = stockage[tagId].tagId;
+            stockage_archive[tagId].timestamp = stockage[tagId].timestamp;
+            stockage_archive[tagId].x = stockage[tagId].x;
+            stockage_archive[tagId].y = stockage[tagId].y;
+            stockage_archive[tagId].isGet = stockage[tagId].isGet;
+            stockage_archive[tagId].isLost = stockage[tagId].isLost;
             //Je sais pas si la ligne d'en dessous est correct :  tester et remplacer par celle de haut dessus
             //stockage_archive = stockage;
             //gpsDataArchive = gpsData;
