@@ -88,10 +88,7 @@ namespace SystemeLocalisation
         int thirdId = 26963;
 
         int CurrentTagId;
-        int DrawCoordX;
-        int DrawCoordY;
-        int DrawCoordArchiveX;
-        int DrawCoordArchiveY;
+        int NbColisGet = 0;
 
         Graphics graphics;
 
@@ -100,13 +97,15 @@ namespace SystemeLocalisation
         {
             WindowState = FormWindowState.Maximized;
             InitializeComponent();
+
+            
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
             pictureBox1.Image = new Bitmap(1250, 650);
             graphics = Graphics.FromImage(pictureBox1.Image);
-            mqttClient = new MqttClient("test.mosquitto.org");
+            mqttClient = new MqttClient("172.30.4.44");
             mqttClient.MqttMsgPublishReceived += client_MqttMsgPublishReceived;
             string clientId = Guid.NewGuid().ToString();
             mqttClient.Connect(clientId);
@@ -152,29 +151,18 @@ namespace SystemeLocalisation
                         if(gpsData.x == 0)
                         {
                             //Premire fois qu'on voit cet id tu maintag
-                            Console.WriteLine(item.data.coordinates.y);
                             gpsData.tagId = item.tagId;
                             gpsData.x = item.data.coordinates.x;
                             gpsData.y = item.data.coordinates.y;
                             gpsData.timestamp = item.timestamp;
+
+                            CurrentTagId = item.tagId;
 
                             gpsDataArchive.tagId = item.tagId;
                             gpsDataArchive.x = item.data.coordinates.x;
                             gpsDataArchive.y = item.data.coordinates.y;
                             gpsDataArchive.timestamp = item.timestamp;
 
-                            CurrentTagId = item.tagId;
-                            ConvertX(stockage, gpsData, item.tagId);
-                            ConvertY(stockage, gpsData, item.tagId);
-                            //Console.WriteLine("X a dessiner {0}", DrawCoordX);
-                            //Console.WriteLine("Y a dessiner {0}", DrawCoordY);
-                            Console.WriteLine("Affichage Stockgps Premiere fois");
-                            Console.WriteLine(gpsData.tagId);
-                            Console.WriteLine(gpsData.x);
-                            Console.WriteLine(gpsData.y);
-                            Console.WriteLine("---------------------------------");
-                            EraseArchiveX(stockage_archive, gpsDataArchive, item.tagId);
-                            EraseArchiveY(stockage_archive, gpsDataArchive, item.tagId);
 
                         }
                         else
@@ -185,23 +173,6 @@ namespace SystemeLocalisation
                             gpsData.y = item.data.coordinates.y;
                             gpsData.timestamp = item.timestamp;
                             CurrentTagId = item.tagId;
-                            //affichage_struct(stockage);
-                            ConvertX(stockage,gpsData,item.tagId);
-                            ConvertY(stockage,gpsData,item.tagId);
-                            EraseArchiveX(stockage_archive, gpsDataArchive, item.tagId);
-                            EraseArchiveY(stockage_archive, gpsDataArchive, item.tagId);
-                            //Console.WriteLine("X a dessiner {0}", DrawCoordX);
-                            //Console.WriteLine("Y a dessiner {0}", DrawCoordY);
-                            //Console.WriteLine("X a effacer {0}", DrawCoordArchiveX);
-                            //Console.WriteLine("Y a effacer {0}", DrawCoordArchiveY);
-                            Console.WriteLine("Affichage Stockgps");
-                            Console.WriteLine(gpsData.tagId);
-                            Console.WriteLine(gpsData.x);
-                            Console.WriteLine(gpsData.y);
-                            Console.WriteLine("Affichage gps archve");
-                            Console.WriteLine(gpsDataArchive.tagId);
-                            Console.WriteLine(gpsDataArchive.x);
-                            Console.WriteLine(gpsDataArchive.y);
                             gpsDataArchive.tagId = item.tagId;
                             gpsDataArchive.x = item.data.coordinates.x;
                             gpsDataArchive.y = item.data.coordinates.y;
@@ -240,13 +211,15 @@ namespace SystemeLocalisation
                             stockage[item.tagId].SpeedX = speedx;
                             stockage[item.tagId].SpeedY = speedy;
                             CurrentTagId = item.tagId;
-                            ConvertX(stockage, gpsData, item.tagId);
-                            ConvertY(stockage, gpsData, item.tagId);
-                            EraseArchiveX(stockage_archive, gpsDataArchive, item.tagId);
-                            EraseArchiveY(stockage_archive, gpsDataArchive, item.tagId);
                             //Console.WriteLine("Vitesse en x {0}  Vitesse en y {1} dans l'archive pour voir si on a bien mis les valeurs", stockage[item.tagId].SpeedX, stockage[item.tagId].SpeedY);
                             PackageIsCollected(item.tagId);
                             PackageIsDropped(item.tagId);
+                            bool lost = ColisLost(stockage);
+                            //if(lost == true)
+                            //{
+                                
+                            //    lost = false;
+                            //}
                         }
                         else
                         {
@@ -273,10 +246,7 @@ namespace SystemeLocalisation
                             stockage.Add(item.tagId, ajout);
                             stockage_archive.Add(item.tagId, ajout_archive);
                             CurrentTagId = item.tagId;
-                            ConvertX(stockage, gpsData, item.tagId);
-                            ConvertY(stockage, gpsData, item.tagId);
-                            EraseArchiveX(stockage_archive, gpsDataArchive, item.tagId);
-                            EraseArchiveY(stockage_archive, gpsDataArchive, item.tagId);
+                            //Console.WriteLine(stockage.Count);
                         }
                     }
                 }
@@ -309,6 +279,7 @@ namespace SystemeLocalisation
                         Console.WriteLine("---------------------------------------------------------------------------------");
                         Console.WriteLine("Le colis : {0} a été recup par vous !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", tagId);
                         Console.WriteLine("---------------------------------------------------------------------------------");
+
                     }
                 }
                 //stockage_archive[tagId] = stockage[tagId];
@@ -343,6 +314,7 @@ namespace SystemeLocalisation
                     if(stockage[tagId].isLost==true)
                     {
                         Console.WriteLine("DEMI TOUR COLIS PERDU");
+                        MessageBox.Show("T'as fait tomber un colis !!! fais demi tour");
                         //stockage_archive[tagId] = stockage[tagId];
                         stockage_archive[tagId].tagId = stockage[tagId].tagId;
                         stockage_archive[tagId].timestamp = stockage[tagId].timestamp;
@@ -352,6 +324,7 @@ namespace SystemeLocalisation
                         stockage_archive[tagId].isLost = stockage[tagId].isLost;
                         //Je sais pas si la ligne d'en dessous est correct :  tester et remplacer par celle de haut dessus
                         //stockage_archive = stockage;
+                        NbColisGet--;
                     }
                 }
             }
@@ -363,34 +336,56 @@ namespace SystemeLocalisation
             //pas oublier d'effacer les coord precedente avant de redessiner les new
 
             //egalement un if si gpsData pas vide draw le gps
-            if(CurrentTagId == mainId)
+
+            int nbget = Nb_colis_get(stockage);
+            if(nbget == 0)
+            {
+                label1.Text = "Nombre de colis récupérés : 0";
+            } else if(nbget == 1) {
+                label1.Text = "Nombre de colis récupérés : 1";
+            } else if( nbget == 2)
+            {
+                label1.Text = "Nombre de colis récupérés : 2";
+            }
+
+            if (CurrentTagId == mainId)
             {
                 if(gpsData.x != 0 && gpsData.y != 0)
                 {
                     //Console.WriteLine("On est ici");
-                    graphics.FillRectangle(Brushes.Cyan, DrawCoordArchiveX, DrawCoordArchiveY, 30, 30);
-                    graphics.FillRectangle(Brushes.Black, DrawCoordX, DrawCoordY, 30, 30);
+                    //graphics.FillRectangle(Brushes.Cyan, DrawCoordArchiveX, DrawCoordArchiveY, 30, 30);
+                    graphics.Clear(Color.Cyan);
+                    //Image image = Image.FromFile(@"C:\Users\USER\Desktop\Systeme_Location_C-\R303.png");
+                    //pictureBox1.BackgroundImage = image;
+                    graphics.FillRectangle(Brushes.Black, ConvertXGps(gpsData,CurrentTagId), ConvertYGps(gpsData,CurrentTagId), 30, 30);
+                    for(int i = 0; i < stockage.Count;i++)
+                    {
+                        int MonX = ConvertXBalise(stockage, stockage.ElementAt(i).Key);
+                        int MonY = ConvertYBalise(stockage, stockage.ElementAt(i).Key);
+                        graphics.FillRectangle(Brushes.Red, MonX, MonY, 30, 30);
+                    }
                     pictureBox1.Refresh();
 
                 }
             } else if ( CurrentTagId == secondId || CurrentTagId == thirdId)
             {
-                if (stockage.ContainsKey(CurrentTagId))
+                graphics.Clear(Color.Cyan);
+                //Image image = Image.FromFile(@"C:\Users\USER\Desktop\Systeme_Location_C-\R303.png");
+                //pictureBox1.BackgroundImage = image;
+                for (int i = 0; i < stockage.Count; i++)
                 {
-                    if(stockage[CurrentTagId].x != 0 && stockage[CurrentTagId].y != 0)
-                    {
-                        graphics.FillRectangle(Brushes.Cyan, DrawCoordArchiveX, DrawCoordArchiveY, 30, 30);
-                        if (CurrentTagId == secondId)
-                        {
-                            graphics.FillRectangle(Brushes.Red, DrawCoordX, DrawCoordY, 30, 30);
-                            pictureBox1.Refresh();
-                        } else if(CurrentTagId == thirdId)
-                        {
-                            graphics.FillRectangle(Brushes.Yellow, DrawCoordX, DrawCoordY, 30, 30);
-                            pictureBox1.Refresh();
-                        }
-                    }
+                    int MonX = ConvertXBalise(stockage, stockage.ElementAt(i).Key);
+                    int MonY = ConvertYBalise(stockage, stockage.ElementAt(i).Key);
+                    graphics.FillRectangle(Brushes.Red, MonX, MonY, 30, 30);
                 }
+
+                if(gpsData.x!= 0 && gpsData.y != 0)
+                {
+
+                    graphics.FillRectangle(Brushes.Black, ConvertXGps(gpsData, gpsData.tagId), ConvertYGps(gpsData, gpsData.tagId), 30, 30);
+                }
+                pictureBox1.Refresh();
+
             }
 
         }
@@ -399,62 +394,67 @@ namespace SystemeLocalisation
             //Trouver formule math pour voir quel point est le plus proche de moi en x et y et retourner un tableau avec l'ordre par tagid
         }
 
-        private void ConvertX(Dictionary<int, BaliseData> stockage, GpsData gpsData, int tagId)
+        private int ConvertXGps(GpsData gpsData, int tagId)
+        {
+            int AverageRealLifeX = 26894;
+            int CoeffX = AverageRealLifeX / 1250;
+            int res = gpsData.x / CoeffX;
+            return res ;
+        }
+
+
+        private int ConvertYGps(GpsData gpsData, int tagId)
+        {
+            int AverageRealLifeY = 7524;
+            int CoeffY = AverageRealLifeY / 650;
+            int res = gpsData.y / CoeffY;
+            return res;
+        }
+
+        private int ConvertXBalise(Dictionary<int, BaliseData> stockage, int tagId)
         {
             //280 + 26614
             int AverageRealLifeX = 26894;
             int CoeffX = AverageRealLifeX / 1250;
-            if(tagId == mainId)
-            {
-                DrawCoordX = gpsData.x / CoeffX;
-            }else if(tagId == secondId || tagId == thirdId)
-            {
-                DrawCoordX = stockage[tagId].x / CoeffX;
-            }
+            int res = stockage[tagId].x / CoeffX;
+            return res;
         }
 
-        private void ConvertY(Dictionary<int, BaliseData> stockage, GpsData gpsData, int tagId)
+        private int ConvertYBalise(Dictionary<int, BaliseData> stockage, int tagId)
         {
-            //510+7014
+            //280 + 26614
             int AverageRealLifeY = 7524;
             int CoeffY = AverageRealLifeY / 650;
-            if (tagId == mainId)
-            {
-                DrawCoordY = gpsData.y / CoeffY;
-            }
-            else if (tagId == secondId || tagId == thirdId)
-            {
-                DrawCoordY = stockage[tagId].y / CoeffY;
-            }
+            int res = stockage[tagId].y / CoeffY;
+            return res;
         }
 
-        private void EraseArchiveX(Dictionary<int, BaliseData> stockage, GpsData gpsDataArchive, int tagId)
+        private int Nb_colis_get(Dictionary<int, BaliseData> stockage)
         {
-            int AverageRealLifeX = 26894;
-            int CoeffX = AverageRealLifeX / 1250;
-            if (tagId == mainId)
+            int res = 0;
+            for (int i = 0; i < stockage.Count; i++)
             {
-                DrawCoordArchiveX = gpsDataArchive.x / CoeffX;
+                if (stockage.ElementAt(i).Value.isGet == true)
+                {
+                    res++;
+                }
             }
-            else if (tagId == secondId || tagId == thirdId)
-            {
-                DrawCoordArchiveX = stockage_archive[tagId].x / CoeffX;
-            }
+
+            return res;
         }
 
-        private void EraseArchiveY(Dictionary<int, BaliseData> stockage_archive, GpsData gpsDataArchive, int tagId)
+        private bool ColisLost(Dictionary<int, BaliseData> stockage)
         {
-            int AverageRealLifeY = 7524;
-            int CoeffY = AverageRealLifeY / 650;
-            if (tagId == mainId)
+            for(int i = 0; i < stockage.Count; i++)
             {
-                DrawCoordArchiveY = gpsDataArchive.y / CoeffY;
+                if(stockage.ElementAt(i).Value.isLost == true)
+                {
+                    return true;
+                }
             }
-            else if (tagId == secondId || tagId == thirdId)
-            {
-                DrawCoordArchiveY = stockage_archive[tagId].y / CoeffY;
-            }
+            return false;
         }
+
 
 
     }
