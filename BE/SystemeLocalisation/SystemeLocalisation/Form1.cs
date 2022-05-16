@@ -87,8 +87,9 @@ namespace SystemeLocalisation
         int secondId = 26921;
         int thirdId = 26963;
 
-        int CurrentTagId;
+        int CurrentTagId = 0;
         int NbColisGet = 0;
+        int firstToGet = 0;
 
         Graphics graphics;
 
@@ -105,7 +106,7 @@ namespace SystemeLocalisation
         {
             pictureBox1.Image = new Bitmap(1250, 650);
             graphics = Graphics.FromImage(pictureBox1.Image);
-            mqttClient = new MqttClient("172.30.4.44");
+            mqttClient = new MqttClient("test.mosquitto.org");
             mqttClient.MqttMsgPublishReceived += client_MqttMsgPublishReceived;
             string clientId = Guid.NewGuid().ToString();
             mqttClient.Connect(clientId);
@@ -348,50 +349,98 @@ namespace SystemeLocalisation
                 label1.Text = "Nombre de colis récupérés : 2";
             }
 
-            if (CurrentTagId == mainId)
+            if(stockage.Count > 1)
             {
-                if(gpsData.x != 0 && gpsData.y != 0)
+                firstToGet = OrdreRecuperation(gpsData, stockage);
+            }
+            Console.WriteLine(firstToGet);
+
+            //if (CurrentTagId == mainId)
+            //{
+                if(gpsData.x != 0 && gpsData.y != 0 && CurrentTagId != 0)
                 {
                     //Console.WriteLine("On est ici");
                     //graphics.FillRectangle(Brushes.Cyan, DrawCoordArchiveX, DrawCoordArchiveY, 30, 30);
-                    graphics.Clear(Color.Cyan);
+                    //graphics.Clear(Color.Cyan);
+                    graphics.Clear(Color.Transparent);
                     //Image image = Image.FromFile(@"C:\Users\USER\Desktop\Systeme_Location_C-\R303.png");
                     //pictureBox1.BackgroundImage = image;
-                    graphics.FillRectangle(Brushes.Black, ConvertXGps(gpsData,CurrentTagId), ConvertYGps(gpsData,CurrentTagId), 30, 30);
-                    for(int i = 0; i < stockage.Count;i++)
+                    graphics.DrawImage(imageList.Images[2], ConvertXGps(gpsData,mainId), ConvertYGps(gpsData,mainId), 30, 30);
+                    if(stockage.Count > 1)
                     {
-                        int MonX = ConvertXBalise(stockage, stockage.ElementAt(i).Key);
-                        int MonY = ConvertYBalise(stockage, stockage.ElementAt(i).Key);
-                        graphics.FillRectangle(Brushes.Red, MonX, MonY, 30, 30);
+                        if(firstToGet == secondId)
+                        {
+                            int MonX = ConvertXBalise(stockage, secondId);
+                            int MonY = ConvertYBalise(stockage, secondId);
+                            int MonXBis = ConvertXBalise(stockage, thirdId);
+                            int MonYBis = ConvertYBalise(stockage, thirdId);
+                            graphics.DrawImage(imageList.Images[0], MonX, MonY, 30, 30);
+                            graphics.DrawImage(imageList.Images[1], MonXBis, MonYBis, 30, 30);
+                        }
+                        else if(firstToGet == thirdId)
+                        {
+                            int MonX = ConvertXBalise(stockage, secondId);
+                            int MonY = ConvertYBalise(stockage, secondId);
+                            int MonXBis = ConvertXBalise(stockage, thirdId);
+                            int MonYBis = ConvertYBalise(stockage, thirdId);
+                            graphics.DrawImage(imageList.Images[1], MonX, MonY, 30, 30);
+                            graphics.DrawImage(imageList.Images[0], MonXBis, MonYBis, 30, 30);
+                        }
+                    }
+                    else if (stockage.Count == 1)
+                    {
+                        int MonX = ConvertXBalise(stockage, stockage.ElementAt(0).Key);
+                        int MonY = ConvertYBalise(stockage, stockage.ElementAt(0).Key);
+                        graphics.DrawImage(imageList.Images[0], MonX, MonY, 30, 30);
+
                     }
                     pictureBox1.Refresh();
 
                 }
-            } else if ( CurrentTagId == secondId || CurrentTagId == thirdId)
-            {
-                graphics.Clear(Color.Cyan);
-                //Image image = Image.FromFile(@"C:\Users\USER\Desktop\Systeme_Location_C-\R303.png");
-                //pictureBox1.BackgroundImage = image;
-                for (int i = 0; i < stockage.Count; i++)
-                {
-                    int MonX = ConvertXBalise(stockage, stockage.ElementAt(i).Key);
-                    int MonY = ConvertYBalise(stockage, stockage.ElementAt(i).Key);
-                    graphics.FillRectangle(Brushes.Red, MonX, MonY, 30, 30);
-                }
+            //} 
+            //else if ( CurrentTagId == secondId || CurrentTagId == thirdId)
+            //{
+            //    //graphics.Clear(Color.Cyan);
+            //    graphics.Clear(Color.Transparent);
+            //    //Image image = Image.FromFile(@"C:\Users\USER\Desktop\Systeme_Location_C-\R303.png");
+            //    //pictureBox1.BackgroundImage = image;
+            //    for (int i = 0; i < stockage.Count; i++)
+            //    {
+            //        int MonX = ConvertXBalise(stockage, stockage.ElementAt(i).Key);
+            //        int MonY = ConvertYBalise(stockage, stockage.ElementAt(i).Key);
+            //        graphics.FillRectangle(Brushes.Red, MonX, MonY, 30, 30);
+            //    }
 
-                if(gpsData.x!= 0 && gpsData.y != 0)
-                {
+            //    if(gpsData.x!= 0 && gpsData.y != 0)
+            //    {
 
-                    graphics.FillRectangle(Brushes.Black, ConvertXGps(gpsData, gpsData.tagId), ConvertYGps(gpsData, gpsData.tagId), 30, 30);
-                }
-                pictureBox1.Refresh();
+            //        graphics.FillRectangle(Brushes.Black, ConvertXGps(gpsData, gpsData.tagId), ConvertYGps(gpsData, gpsData.tagId), 30, 30);
+            //    }
+            //    pictureBox1.Refresh();
 
-            }
+            //}
 
         }
-        private void OrdreRecuperation(GpsData gpsData, Dictionary<int, BaliseData> stockage)
+        private int OrdreRecuperation(GpsData gpsData, Dictionary<int, BaliseData> stockage)
         {
             //Trouver formule math pour voir quel point est le plus proche de moi en x et y et retourner un tableau avec l'ordre par tagid
+            if (stockage.Count == 1)
+            {
+                return stockage.ElementAt(0).Value.tagId;
+            }else if(stockage.Count == 2) { 
+                double distance1 = Math.Sqrt((Math.Pow(gpsData.x - stockage.ElementAt(0).Value.x, 2) + Math.Pow(gpsData.y - stockage.ElementAt(0).Value.y, 2)));
+                double distance2 = Math.Sqrt((Math.Pow(gpsData.x - stockage.ElementAt(1).Value.x, 2) + Math.Pow(gpsData.y - stockage.ElementAt(1).Value.y, 2)));
+                if(distance1 < distance2)
+                {
+                    return stockage.ElementAt(0).Key;
+                }
+                else
+                {
+                    return stockage.ElementAt(1).Key;
+                }
+            }
+
+            return 0;
         }
 
         private int ConvertXGps(GpsData gpsData, int tagId)

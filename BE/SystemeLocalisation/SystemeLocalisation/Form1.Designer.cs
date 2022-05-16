@@ -29,9 +29,11 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.timer = new System.Windows.Forms.Timer(this.components);
             this.label1 = new System.Windows.Forms.Label();
+            this.imageList = new System.Windows.Forms.ImageList(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -61,6 +63,14 @@
             this.label1.TabIndex = 1;
             this.label1.Text = "Nombre de colis récupérés : 0";
             // 
+            // imageList
+            // 
+            this.imageList.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imageList.ImageStream")));
+            this.imageList.TransparentColor = System.Drawing.Color.Transparent;
+            this.imageList.Images.SetKeyName(0, "numero1.png");
+            this.imageList.Images.SetKeyName(1, "numero2.png");
+            this.imageList.Images.SetKeyName(2, "smiley.png");
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -82,6 +92,7 @@
         private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.Timer timer;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.ImageList imageList;
     }
 }
 
