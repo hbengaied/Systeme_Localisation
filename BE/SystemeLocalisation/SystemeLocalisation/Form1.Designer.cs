@@ -50,6 +50,7 @@
             // timer
             // 
             this.timer.Enabled = true;
+            this.timer.Interval = 50;
             this.timer.Tick += new System.EventHandler(this.TimerEvent);
             // 
             // label1

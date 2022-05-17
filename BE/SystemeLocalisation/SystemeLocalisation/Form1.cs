@@ -60,7 +60,6 @@ namespace SystemeLocalisation
         }
 
         GpsData gpsData = new GpsData();
-        GpsData gpsDataArchive = new GpsData();
 
         public class Coordinates
         {
@@ -106,7 +105,7 @@ namespace SystemeLocalisation
         {
             pictureBox1.Image = new Bitmap(1250, 650);
             graphics = Graphics.FromImage(pictureBox1.Image);
-            mqttClient = new MqttClient("test.mosquitto.org");
+            mqttClient = new MqttClient("172.30.4.44");
             mqttClient.MqttMsgPublishReceived += client_MqttMsgPublishReceived;
             string clientId = Guid.NewGuid().ToString();
             mqttClient.Connect(clientId);
@@ -121,27 +120,20 @@ namespace SystemeLocalisation
             }
         }
 
-        //private BaliseData archive_data(BaliseData nouveau)
+        //private void affichage_struct(Dictionary<int, BaliseData> d)
         //{
-        //    return nouveau;
+        //    foreach (KeyValuePair<int, BaliseData> kvp in d)
+        //    {
+        //        Console.WriteLine("Key {0}\nTagId : {1} \nX : {2}\nY : {3}\nTimeStamp : {4} \nSpeedX : {5} \nSpeedY : {6} ",
+        //            kvp.Key, kvp.Value.tagId, kvp.Value.x, kvp.Value.y, kvp.Value.timestamp, kvp.Value.SpeedX, kvp.Value.SpeedY);
+        //    }
         //}
-
-        private void affichage_struct(Dictionary<int, BaliseData> d)
-        {
-            foreach (KeyValuePair<int, BaliseData> kvp in d)
-            {
-                Console.WriteLine("Key {0}\nTagId : {1} \nX : {2}\nY : {3}\nTimeStamp : {4} \nSpeedX : {5} \nSpeedY : {6} ",
-                    kvp.Key, kvp.Value.tagId, kvp.Value.x, kvp.Value.y, kvp.Value.timestamp, kvp.Value.SpeedX, kvp.Value.SpeedY);
-            }
-        }
 
         private void client_MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)
         {
             try
             {
-
                 // handle message received
-
                 var message = Encoding.UTF8.GetString(e.Message);
                 List<Result> result = JsonConvert.DeserializeObject<List<Result>>(message);
 
@@ -152,34 +144,15 @@ namespace SystemeLocalisation
                         if(gpsData.x == 0)
                         {
                             //Premire fois qu'on voit cet id tu maintag
-                            gpsData.tagId = item.tagId;
-                            gpsData.x = item.data.coordinates.x;
-                            gpsData.y = item.data.coordinates.y;
-                            gpsData.timestamp = item.timestamp;
-
+                            NewDataGps(gpsData, item.data.coordinates.x, item.data.coordinates.y, item.timestamp, item.tagId);
                             CurrentTagId = item.tagId;
-
-                            gpsDataArchive.tagId = item.tagId;
-                            gpsDataArchive.x = item.data.coordinates.x;
-                            gpsDataArchive.y = item.data.coordinates.y;
-                            gpsDataArchive.timestamp = item.timestamp;
-
-
                         }
                         else
                         {
                             //Console.WriteLine("Ensuite ici on a modifie juste les valeur de la balise gps");
-                            gpsData.tagId = item.tagId;
-                            gpsData.x = item.data.coordinates.x;
-                            gpsData.y = item.data.coordinates.y;
-                            gpsData.timestamp = item.timestamp;
+                            NewDataGps(gpsData, item.data.coordinates.x, item.data.coordinates.y, item.timestamp, item.tagId);
                             CurrentTagId = item.tagId;
-                            gpsDataArchive.tagId = item.tagId;
-                            gpsDataArchive.x = item.data.coordinates.x;
-                            gpsDataArchive.y = item.data.coordinates.y;
-                            gpsDataArchive.timestamp = item.timestamp;
                         }
-
                     }
                     else if(item.tagId == secondId ||item.tagId == thirdId)
                     {
@@ -192,20 +165,9 @@ namespace SystemeLocalisation
                             stockage[item.tagId].x = item.data.coordinates.x;
                             stockage[item.tagId].y = item.data.coordinates.y;
                             stockage[item.tagId].timestamp = item.timestamp;
-                            //Console.WriteLine("---------------------------------------------------------------------------------");
-                            //Console.WriteLine("Affichage contenu stockage");
-                            //affichage_struct(stockage);
-                            //Console.WriteLine("\n");
-                            //Console.WriteLine("Affichage contenu archive");
-                            //Console.WriteLine("\n");
-                            //affichage_struct(stockage_archive);
-                            //Console.WriteLine("Numero du tag {0}", item.tagId);
                             decimal soustractionx = Math.Abs(stockage[item.tagId].x - stockage_archive[item.tagId].x);
                             decimal soustractiony = Math.Abs(stockage[item.tagId].y - stockage_archive[item.tagId].y);
                             decimal TimeStamp_Colis = Math.Abs(stockage[item.tagId].timestamp - stockage_archive[item.tagId].timestamp);
-                            //Console.WriteLine("Valeur en x : {0}", soustractionx);
-                            //Console.WriteLine("Valeur en y : {0}", soustractiony);
-                            //Console.WriteLine("Valeur time : {0}", TimeStamp_Colis);
                             decimal speedx = (soustractionx / 1000) / TimeStamp_Colis;
                             decimal speedy = (soustractiony / 1000) / TimeStamp_Colis;
                             //Console.WriteLine("Valeur de la vitesse apres le calcul en x {0} et y {1} dans le stockage : ",speedx, speedy);
@@ -216,17 +178,11 @@ namespace SystemeLocalisation
                             PackageIsCollected(item.tagId);
                             PackageIsDropped(item.tagId);
                             bool lost = ColisLost(stockage);
-                            //if(lost == true)
-                            //{
-                                
-                            //    lost = false;
-                            //}
                         }
                         else
                         {
                             BaliseData ajout = new BaliseData();
                             BaliseData ajout_archive = new BaliseData();
-                            //Console.WriteLine("First ici car au debut notre id existe pas");
                             ajout.tagId = item.tagId;
                             ajout.x = item.data.coordinates.x;
                             ajout.y = item.data.coordinates.y;
@@ -247,20 +203,17 @@ namespace SystemeLocalisation
                             stockage.Add(item.tagId, ajout);
                             stockage_archive.Add(item.tagId, ajout_archive);
                             CurrentTagId = item.tagId;
-                            //Console.WriteLine(stockage.Count);
                         }
                     }
                 }
             } catch(Exception ex)
             {
-                //Console.WriteLine("NIQUEEEEE ZEBIIIIIIIIIIIIIII");
-                //Console.WriteLine(ex.Message);
+
             }
         }
 
         private void PackageIsCollected(int tagId)
         {
-            decimal TimeStampGps = gpsData.timestamp - gpsDataArchive.timestamp;
             decimal TimeStamp_Colis = stockage[tagId].timestamp - stockage_archive[tagId].timestamp;
             //Si capteur se deplace en x ou en y plus que la marge d'erreur alors le capteur de deplace
             if(Math.Abs(stockage_archive[tagId].x - stockage[tagId].x)> 50 ||
@@ -269,11 +222,10 @@ namespace SystemeLocalisation
                 //Si la vitesse de deplacement est > 0.35m/s c'est pas un outlier mais bel est bien qmq qui deplace le colis
                 if((float)stockage[tagId].SpeedX > 3 || (float)stockage[tagId].SpeedY > 3)
                 {
-                    //Console.WriteLine("Mouvement !!!!!!!!!!");
                     //Si le colis se trouve à moins de 40 cm de moi alors c'est moi qui l'est recup
                     if(Math.Abs(gpsData.x - stockage[tagId].x) < 400 &&
                         Math.Abs(gpsData.y - stockage[tagId].y) < 400 && 
-                        TimeStamp_Colis < 2 && TimeStampGps < 2 && stockage[tagId].isGet == false)
+                        TimeStamp_Colis < 2 && stockage[tagId].isGet == false)
                     {
                         stockage[tagId].isGet = true;
                         stockage[tagId].isLost = false;
@@ -283,22 +235,8 @@ namespace SystemeLocalisation
 
                     }
                 }
-                //stockage_archive[tagId] = stockage[tagId];
             }
-
-            stockage_archive[tagId].tagId = stockage[tagId].tagId;
-            stockage_archive[tagId].timestamp = stockage[tagId].timestamp;
-            stockage_archive[tagId].x = stockage[tagId].x;
-            stockage_archive[tagId].y = stockage[tagId].y;
-            stockage_archive[tagId].isGet = stockage[tagId].isGet;
-            stockage_archive[tagId].isLost = stockage[tagId].isLost;
-            //Je sais pas si la ligne d'en dessous est correct :  tester et remplacer par celle de haut dessus
-            //stockage_archive = stockage;
-            //gpsDataArchive = gpsData;
-            gpsDataArchive.tagId = gpsData.tagId;
-            gpsDataArchive.x = gpsData.x;
-            gpsDataArchive.y = gpsData.y;
-            gpsDataArchive.timestamp = gpsData.timestamp;
+            ArchiveStockage(stockage,stockage_archive,tagId);
         }
 
         private void PackageIsDropped(int tagId)
@@ -316,15 +254,7 @@ namespace SystemeLocalisation
                     {
                         Console.WriteLine("DEMI TOUR COLIS PERDU");
                         MessageBox.Show("T'as fait tomber un colis !!! fais demi tour");
-                        //stockage_archive[tagId] = stockage[tagId];
-                        stockage_archive[tagId].tagId = stockage[tagId].tagId;
-                        stockage_archive[tagId].timestamp = stockage[tagId].timestamp;
-                        stockage_archive[tagId].x = stockage[tagId].x;
-                        stockage_archive[tagId].y = stockage[tagId].y;
-                        stockage_archive[tagId].isGet = stockage[tagId].isGet;
-                        stockage_archive[tagId].isLost = stockage[tagId].isLost;
-                        //Je sais pas si la ligne d'en dessous est correct :  tester et remplacer par celle de haut dessus
-                        //stockage_archive = stockage;
+                        ArchiveStockage(stockage, stockage_archive, tagId);
                         NbColisGet--;
                     }
                 }
@@ -355,72 +285,43 @@ namespace SystemeLocalisation
             }
             Console.WriteLine(firstToGet);
 
-            //if (CurrentTagId == mainId)
-            //{
-                if(gpsData.x != 0 && gpsData.y != 0 && CurrentTagId != 0)
+            if(gpsData.x != 0 && gpsData.y != 0 && CurrentTagId != 0)
+            {
+                //Console.WriteLine("On est ici");
+                graphics.Clear(Color.Transparent);
+                graphics.DrawImage(imageList.Images[2], ConvertXGps(gpsData,mainId), ConvertYGps(gpsData,mainId), 30, 30);
+                if(stockage.Count > 1)
                 {
-                    //Console.WriteLine("On est ici");
-                    //graphics.FillRectangle(Brushes.Cyan, DrawCoordArchiveX, DrawCoordArchiveY, 30, 30);
-                    //graphics.Clear(Color.Cyan);
-                    graphics.Clear(Color.Transparent);
-                    //Image image = Image.FromFile(@"C:\Users\USER\Desktop\Systeme_Location_C-\R303.png");
-                    //pictureBox1.BackgroundImage = image;
-                    graphics.DrawImage(imageList.Images[2], ConvertXGps(gpsData,mainId), ConvertYGps(gpsData,mainId), 30, 30);
-                    if(stockage.Count > 1)
+                    if(firstToGet == secondId)
                     {
-                        if(firstToGet == secondId)
-                        {
-                            int MonX = ConvertXBalise(stockage, secondId);
-                            int MonY = ConvertYBalise(stockage, secondId);
-                            int MonXBis = ConvertXBalise(stockage, thirdId);
-                            int MonYBis = ConvertYBalise(stockage, thirdId);
-                            graphics.DrawImage(imageList.Images[0], MonX, MonY, 30, 30);
-                            graphics.DrawImage(imageList.Images[1], MonXBis, MonYBis, 30, 30);
-                        }
-                        else if(firstToGet == thirdId)
-                        {
-                            int MonX = ConvertXBalise(stockage, secondId);
-                            int MonY = ConvertYBalise(stockage, secondId);
-                            int MonXBis = ConvertXBalise(stockage, thirdId);
-                            int MonYBis = ConvertYBalise(stockage, thirdId);
-                            graphics.DrawImage(imageList.Images[1], MonX, MonY, 30, 30);
-                            graphics.DrawImage(imageList.Images[0], MonXBis, MonYBis, 30, 30);
-                        }
-                    }
-                    else if (stockage.Count == 1)
-                    {
-                        int MonX = ConvertXBalise(stockage, stockage.ElementAt(0).Key);
-                        int MonY = ConvertYBalise(stockage, stockage.ElementAt(0).Key);
+                        int MonX = ConvertXBalise(stockage, secondId);
+                        int MonY = ConvertYBalise(stockage, secondId);
+                        int MonXBis = ConvertXBalise(stockage, thirdId);
+                        int MonYBis = ConvertYBalise(stockage, thirdId);
                         graphics.DrawImage(imageList.Images[0], MonX, MonY, 30, 30);
-
+                        graphics.DrawImage(imageList.Images[1], MonXBis, MonYBis, 30, 30);
                     }
-                    pictureBox1.Refresh();
+                    else if(firstToGet == thirdId)
+                    {
+                        int MonX = ConvertXBalise(stockage, secondId);
+                        int MonY = ConvertYBalise(stockage, secondId);
+                        int MonXBis = ConvertXBalise(stockage, thirdId);
+                        int MonYBis = ConvertYBalise(stockage, thirdId);
+                        graphics.DrawImage(imageList.Images[1], MonX, MonY, 30, 30);
+                        graphics.DrawImage(imageList.Images[0], MonXBis, MonYBis, 30, 30);
+                    }
+                }
+                else if (stockage.Count == 1)
+                {
+                    int MonX = ConvertXBalise(stockage, stockage.ElementAt(0).Key);
+                    int MonY = ConvertYBalise(stockage, stockage.ElementAt(0).Key);
+                    graphics.DrawImage(imageList.Images[0], MonX, MonY, 30, 30);
 
                 }
-            //} 
-            //else if ( CurrentTagId == secondId || CurrentTagId == thirdId)
-            //{
-            //    //graphics.Clear(Color.Cyan);
-            //    graphics.Clear(Color.Transparent);
-            //    //Image image = Image.FromFile(@"C:\Users\USER\Desktop\Systeme_Location_C-\R303.png");
-            //    //pictureBox1.BackgroundImage = image;
-            //    for (int i = 0; i < stockage.Count; i++)
-            //    {
-            //        int MonX = ConvertXBalise(stockage, stockage.ElementAt(i).Key);
-            //        int MonY = ConvertYBalise(stockage, stockage.ElementAt(i).Key);
-            //        graphics.FillRectangle(Brushes.Red, MonX, MonY, 30, 30);
-            //    }
-
-            //    if(gpsData.x!= 0 && gpsData.y != 0)
-            //    {
-
-            //        graphics.FillRectangle(Brushes.Black, ConvertXGps(gpsData, gpsData.tagId), ConvertYGps(gpsData, gpsData.tagId), 30, 30);
-            //    }
-            //    pictureBox1.Refresh();
-
-            //}
-
+                pictureBox1.Refresh();
+            }
         }
+
         private int OrdreRecuperation(GpsData gpsData, Dictionary<int, BaliseData> stockage)
         {
             //Trouver formule math pour voir quel point est le plus proche de moi en x et y et retourner un tableau avec l'ordre par tagid
@@ -439,7 +340,6 @@ namespace SystemeLocalisation
                     return stockage.ElementAt(1).Key;
                 }
             }
-
             return 0;
         }
 
@@ -504,7 +404,23 @@ namespace SystemeLocalisation
             return false;
         }
 
+        private void NewDataGps(GpsData gpsData, int CoordX, int CoordY, decimal TimeStamp, int TagId)
+        {
+            gpsData.x = CoordX;
+            gpsData.y = CoordY;
+            gpsData.timestamp = TimeStamp; ;
+            gpsData.tagId = TagId;
+        }
 
+        public void ArchiveStockage(Dictionary<int, BaliseData> stockage, Dictionary<int, BaliseData> stockageArchive, int TAG)
+        {
+            stockageArchive[TAG].tagId = stockage[TAG].tagId;
+            stockageArchive[TAG].timestamp = stockage[TAG].timestamp;
+            stockageArchive[TAG].x = stockage[TAG].x;
+            stockageArchive[TAG].y = stockage[TAG].y;
+            stockageArchive[TAG].isGet = stockage[TAG].isGet;
+            stockageArchive[TAG].isLost = stockage[TAG].isLost;
+        }
 
     }
 }
