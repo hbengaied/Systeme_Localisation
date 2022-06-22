@@ -253,7 +253,7 @@ namespace SystemeLocalisation
                     if(stockage[tagId].isLost==true)
                     {
                         Console.WriteLine("DEMI TOUR COLIS PERDU");
-                        MessageBox.Show("T'as fait tomber un colis !!! fais demi tour");
+                        MessageBox.Show("Colis " +tagId + " perdu ! faire demi tour !!");
                         ArchiveStockage(stockage, stockage_archive, tagId);
                         NbColisGet--;
                     }
